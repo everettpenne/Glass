@@ -36,6 +36,18 @@ CompositionLocalProvider(LocalUpdater provides updater) { /* so Settings can rea
 
 It lists the repo's releases (not `/releases/latest`, which hides pre-releases), picks the newest one that has an https `.apk` asset and a higher version than the running app, downloads it into the cache (size and package name checked), then hands it to the system installer through a FileProvider. The library's manifest brings the `INTERNET` and `REQUEST_INSTALL_PACKAGES` permissions and the provider, so apps need no manifest changes. Android asks once for "install unknown apps". The APK must be signed with the same key as the installed app, so updates only apply to release builds. The launch check does not nag again about a version dismissed with "Later"; the settings row always offers it.
 
+## Media
+
+`:media` (`implementation("com.everettpenne:media")`, package `com.everettpenne.media`) is the full-screen image viewer and full-screen video:
+
+```kotlin
+ImageViewerHost { /* content; anything inside can call LocalImageViewer.current(listOf(url), 0) */ }   // or provide LocalImageViewer yourself and draw ImageViewer(urls, start) {}
+FullscreenVideo(player, title) { /* onDismiss */ }     // any Media3 Player: an ExoPlayer, or a MediaController of a playback service
+VideoSurface(player, enabled = !fullscreen)             // the picture, for the inline view; disable it while FullscreenVideo has the player
+```
+
+`ImageViewer`: pinch to zoom up to 6x, pan, double-tap to zoom, swipe between images, swipe down to dismiss, tap to hide the controls. `FullscreenVideo`: black, system bars hidden, turns the phone to landscape for wide video and back afterwards, glass controls (play/pause, seek slider, remaining time, mute) that hide while playing, tap to show or hide, double-tap either half to skip 10 s, Back to leave. The player is the caller's, so playback carries on across the switch with no re-buffering.
+
 ## Gallery
 
 `:gallery` is a sample app showing every component on one page over striped content, with an instrumented test that renders and exercises it. Open it after any change to the glass recipe:
