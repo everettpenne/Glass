@@ -70,7 +70,7 @@ internal fun Modifier.glassControl(shape: androidx.compose.ui.graphics.Shape, pr
     }
     return drawBackdrop(
         backdrop = backdrop, shape = { shape },
-        effects = { if (tint == null) { vibrancy(); blur(8f.dp.toPx()) } else { glassColor(); blur(2f.dp.toPx()) }; lens(lensHeight.dp.toPx(), lensAmount.dp.toPx(), chromaticAberration = true) },
+        effects = { glassColor(); blur(2f.dp.toPx()); lens(lensHeight.dp.toPx(), lensAmount.dp.toPx(), chromaticAberration = true) },
         highlight = { GlassRim },
         shadow = { if (shadowed) Shadow(radius = 8f.dp, color = Color.Black.copy(alpha = .10f)) else null },
         layerBlock = { with(press) { deform() } },

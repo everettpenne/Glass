@@ -80,14 +80,14 @@ fun Modifier.glassSurface(
 
 internal fun lerpDp(a: Float, b: Float, t: Float) = lerp(a, b, t)
 
-/** The light frost of the Backdrop catalog's slider track and tab panel: a lens-bent, vibrant, moderately blurred pane under a pale wash. */
+/** The faint wash under the clear glass of the bar controls: just enough tint to keep icons readable over busy content, with almost no frost. */
 @Composable
-internal fun frostContainer(): Color = if (isSystemInDarkTheme()) Color(0xFF121212).copy(alpha = .4f) else Color(0xFFFAFAFA).copy(alpha = .4f)
+internal fun frostContainer(): Color = if (isSystemInDarkTheme()) Color(0xFF121212).copy(alpha = .14f) else Color(0xFFFAFAFA).copy(alpha = .16f)
 
 /**
- * Lightly frosted glass, for the controls that sit in the bars (the tab bar, search button, back button, action pill and search field):
- * the same recipe as the catalog's slider track and tab panel (vibrancy, an 8dp blur, a lens at the edge, a pale wash). Falls back to the wash
- * alone when there is no glass in scope.
+ * Clear glass, for the controls that sit in the bars (the tab bar, search button, back button, action pill and search field): saturated, barely
+ * blurred (2dp), with a strong lens at the edge and the rim light, so whatever is behind shows through bent, not frosted. Falls back to the
+ * faint wash alone when there is no glass in scope.
  */
 @Composable
 fun Modifier.frostedGlass(shape: Shape, lensHeight: Float = 12f, lensAmount: Float = 24f, shadowed: Boolean = false): Modifier {
@@ -95,7 +95,7 @@ fun Modifier.frostedGlass(shape: Shape, lensHeight: Float = 12f, lensAmount: Flo
     val backdrop = LocalGlassBackdrop.current ?: return this.background(container, shape)
     return drawBackdrop(
         backdrop = backdrop, shape = { shape },
-        effects = { vibrancy(); blur(8f.dp.toPx()); lens(lensHeight.dp.toPx(), lensAmount.dp.toPx(), chromaticAberration = true) },
+        effects = { glassColor(); blur(2f.dp.toPx()); lens(lensHeight.dp.toPx(), lensAmount.dp.toPx(), chromaticAberration = true) },
         highlight = { GlassRim },
         shadow = { if (shadowed) Shadow.Default else null },
         onDrawSurface = { drawRect(container) },

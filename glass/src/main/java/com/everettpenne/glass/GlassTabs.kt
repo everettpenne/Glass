@@ -121,7 +121,7 @@ fun LiquidTabs(
             .graphicsLayer { translationX = panelOffset }
             .drawBackdrop(
                 backdrop = backdrop, shape = shape,
-                effects = { vibrancy(); blur(8f.dp.toPx()); lens(24f.dp.toPx(), 24f.dp.toPx()) },
+                effects = { glassColor(); blur(2f.dp.toPx()); lens(24f.dp.toPx(), 24f.dp.toPx(), chromaticAberration = true) },
                 layerBlock = { val s = lerp(1f, 1f + 16f.dp.toPx() / size.width, drag.pressProgress); scaleX = s; scaleY = s },
                 onDrawSurface = { drawRect(container) },
             )
@@ -134,7 +134,7 @@ fun LiquidTabs(
                 .graphicsLayer { translationX = panelOffset }
                 .drawBackdrop(
                     backdrop = backdrop, shape = shape,
-                    effects = { val p = drag.pressProgress; vibrancy(); blur(8f.dp.toPx()); lens(24f.dp.toPx() * p, 24f.dp.toPx() * p) },
+                    effects = { val p = drag.pressProgress; glassColor(); blur(2f.dp.toPx()); lens(24f.dp.toPx() * p, 24f.dp.toPx() * p, chromaticAberration = true) },
                     highlight = { Highlight.Default.copy(alpha = drag.pressProgress) },
                     onDrawSurface = { drawRect(container) },
                 )
