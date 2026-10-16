@@ -22,6 +22,20 @@ GlassTheme(GlassColors(accent = brandColor, red = ..., green = ...)) {   // Mate
 
 Tabs are anything implementing `GlassTabSpec(route, label, icon)`; the label is the content description. `GlassTabBar(tabs, selected, onSelect, search = ...)` draws the capsule from `tabs` and an optional round search button.
 
+## Updater
+
+`:updater` (`implementation("com.everettpenne:updater")`, package `com.everettpenne.updater`) adds in-app updates from GitHub releases:
+
+```kotlin
+val updater = Updater.get(context, UpdateConfig("owner/Repo", BuildConfig.VERSION_NAME))
+LaunchedEffect(Unit) { updater.checkOnLaunch() }          // quiet unless something newer exists
+UpdateDialog(updater, "AppName")                          // glass alert: notes, Update / Later, progress, Install
+CompositionLocalProvider(LocalUpdater provides updater) { /* so Settings can reach it */ }
+// Settings row: NavRow("Check for Updates", updater.collectStatus()) { updater.onSettingsRowClick() }
+```
+
+It lists the repo's releases (not `/releases/latest`, which hides pre-releases), picks the newest one that has an https `.apk` asset and a higher version than the running app, downloads it into the cache (size and package name checked), then hands it to the system installer through a FileProvider. The library's manifest brings the `INTERNET` and `REQUEST_INSTALL_PACKAGES` permissions and the provider, so apps need no manifest changes. Android asks once for "install unknown apps". The APK must be signed with the same key as the installed app, so updates only apply to release builds. The launch check does not nag again about a version dismissed with "Later"; the settings row always offers it.
+
 ## Gallery
 
 `:gallery` is a sample app showing every component on one page over striped content, with an instrumented test that renders and exercises it. Open it after any change to the glass recipe:
