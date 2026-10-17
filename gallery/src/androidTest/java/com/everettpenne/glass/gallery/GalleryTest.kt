@@ -19,7 +19,7 @@ class GalleryTest {
 
     @Test fun everyComponentRenders() {
         rule.setContent { GlassTheme(GlassColors()) { GalleryScreen() } }
-        listOf("Home", "Library", "Search", "Share", "More").forEach { rule.onNodeWithContentDescription(it).assertIsDisplayed() }
+        listOf("Home", "Library", "Music", "Search", "Share", "More").forEach { rule.onNodeWithContentDescription(it).assertIsDisplayed() }
         rule.onNodeWithText("Prominent").assertIsDisplayed()
         rule.onNodeWithContentDescription("Library").performClick()
         rule.onNodeWithContentDescription("Search").performClick()

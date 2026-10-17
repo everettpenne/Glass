@@ -21,6 +21,7 @@ import com.everettpenne.glass.*
 private val tabs = listOf(
     GlassTabItem("home", "Home", Icons.Rounded.Home),
     GlassTabItem("library", "Library", Icons.Rounded.VideoLibrary),
+    GlassTabItem("music", "Music", Icons.Rounded.MusicNote),
 )
 private val search = GlassTabItem("search", "Search", Icons.Rounded.Search)
 

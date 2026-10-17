@@ -109,12 +109,12 @@ fun <T : GlassTabSpec> GlassTabBar(tabs: List<T>, selected: T?, onSelect: (T) ->
     val accent = LocalGlassColors.current.accent
     Row(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         LiquidTabs(selectedIndex = tabs.indexOf(selected).coerceAtLeast(0), onTabSelected = { onSelect(tabs[it]) }, tabsCount = tabs.size,
-            indicatorVisible = selected != null && selected != search, modifier = Modifier.widthIn(max = 260.dp).weight(1f, fill = false)) {
-            tabs.forEach { tab ->
+            indicatorVisible = selected != null && selected != search, modifier = Modifier) {
+            tabs.forEachIndexed { index, tab ->
                 val on = tab == selected
-                LiquidTab({ onSelect(tab) }, Modifier.semantics { contentDescription = tab.label }) {
+                LiquidTab(index, { onSelect(tab) }, Modifier.semantics { contentDescription = tab.label }) {
                     Icon(tab.icon, null, tint = if (on) accent else ink, modifier = Modifier.size(26.dp))
-                    Text(tab.label, style = IosType.caption1.copy(fontWeight = FontWeight.SemiBold), color = if (on) accent else ink)
+                    Text(tab.label, style = IosType.caption1.copy(fontWeight = FontWeight.SemiBold), color = if (on) accent else ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
