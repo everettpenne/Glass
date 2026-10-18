@@ -17,9 +17,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -52,30 +50,16 @@ internal val LocalTabScale = staticCompositionLocalOf { { 1f } }
 /** The minimum width a tab's own content may take, so even the shortest label keeps a 44dp+ target and the indicator keeps its breathing room. */
 private val TabMinWidth = TabWidths.minSlot.dp
 
-/** Horizontal padding inside each tab's content: the breathing room the indicator pill gives the icon and label it wraps. */
-private val TabSlotPadding = 10.dp
-
-/** Lets [LiquidTab] report its measured content back to [LiquidTabs], which sizes and positions the indicator from it. */
-private val LocalTabMeasure = staticCompositionLocalOf<((Int, LayoutCoordinates) -> Unit)?> { null }
-
-/** The fixed slot width [LiquidTabs] gives each tab; the icon and label centre inside it while the indicator hugs their measured content. */
+/** The fixed slot width [LiquidTabs] gives each tab; the icon and label centre inside it. */
 private val LocalTabSlotWidth = staticCompositionLocalOf { TabMinWidth }
-
-/** Measured slot geometry (physical px) for each tab, so the indicator hugs the active tab even when labels differ in width. */
-private class TabGeometry(count: Int) {
-    val lefts = mutableStateListOf<Float>().apply { repeat(count) { add(0f) } }
-    val widths = mutableStateListOf<Int>().apply { repeat(count) { add(0) } }
-}
 
 /**
  * One tab of [LiquidTabs]: a fixed-width slot (the width [LiquidTabs] computed from [TabWidths]) whose icon and label are content-sized and
- * centred inside it. The whole slot is the tap target and swells with the indicator; only the inner content is reported to [LocalTabMeasure], so
- * the indicator hugs the real icon+label width while the slots spread evenly across the capsule.
+ * centred inside it. The whole slot is the tap target and swells with the indicator.
  */
 @Composable
-fun RowScope.LiquidTab(index: Int, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun RowScope.LiquidTab(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val scale = LocalTabScale.current
-    val measure = LocalTabMeasure.current
     val slot = LocalTabSlotWidth.current
     Box(modifier
         .width(slot).fillMaxHeight()
@@ -83,8 +67,7 @@ fun RowScope.LiquidTab(index: Int, onClick: () -> Unit, modifier: Modifier = Mod
         .graphicsLayer { val s = scale(); scaleX = s; scaleY = s },
         contentAlignment = Alignment.Center) {
         Column(Modifier
-            .onGloballyPositioned { measure?.invoke(index, it) }
-            .widthIn(min = TabMinWidth).padding(horizontal = TabSlotPadding).fillMaxHeight(),
+            .widthIn(min = TabMinWidth).padding(horizontal = 10.dp).fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally, content = content)
     }
 }
@@ -93,6 +76,9 @@ fun RowScope.LiquidTab(index: Int, onClick: () -> Unit, modifier: Modifier = Mod
  * The tab bar of the Backdrop catalog (iOS 26's): a glass capsule with a glass indicator under the selected tab. Press the indicator and it swells into a
  * lens that bends the tabs behind it, and you can drag it to another tab; the tab under it shows in the accent colour. The whole capsule swells a little
  * while the indicator is held. [selectedIndex] positions the indicator; with [indicatorVisible] false (the selection is elsewhere) it fades away.
+ *
+ * Each tab is a fixed, equal-width slot ([TabWidths]), and the indicator fills the selected slot exactly — Apple's floating tab-bar look, where the
+ * glass pill is the width of the tab, not of its label.
  */
 @Composable
 fun LiquidTabs(
@@ -116,42 +102,18 @@ fun LiquidTabs(
         val slot = remember(tabsCount, constraints.maxWidth, density) {
             TabWidths.slots(tabsCount, constraints.maxWidth / density.density).dp
         }
+        val slotPx = with(density) { slot.toPx() }
+        val insetPx = with(density) { TabWidths.capsuleInset.dp.toPx() }
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
         val scope = rememberCoroutineScope()
         val offsetAnimation = remember { Animatable(0f) }
 
-        // Measured tab-content geometry (physical px): each tab reports its centred icon+label box, not its full slot. Positions are the content's
-        // left edge in the root and widths its width, so the indicator hugs the real content while the slots spread evenly. Before the first layout
-        // they are all zero, so the indicator stays hidden until real numbers arrive (one frame).
-        val geometry = remember(tabsCount) { TabGeometry(tabsCount) }
-        var panelLeftPx by remember { mutableFloatStateOf(0f) }
         var panelWidthPx by remember { mutableIntStateOf(0) }
 
-        fun measureTab(index: Int, coordinates: LayoutCoordinates) {
-            val left = coordinates.positionInRoot().x
-            val width = coordinates.size.width
-            if (geometry.lefts[index] != left) geometry.lefts[index] = left
-            if (geometry.widths[index] != width) geometry.widths[index] = width
-        }
-        val measured = geometry.widths.size == tabsCount && geometry.widths.all { it > 0 }
-
         fun indicatorLeft(value: Float): Float {
-            if (geometry.lefts.size != tabsCount) return 0f
             val v = value.coerceIn(0f, (tabsCount - 1).toFloat())
-            val lower = v.toInt().coerceIn(0, tabsCount - 1)
-            val upper = (lower + 1).coerceAtMost(tabsCount - 1)
-            val t = v - lower
-            return geometry.lefts[lower] + (geometry.lefts[upper] - geometry.lefts[lower]) * t - panelLeftPx
+            return insetPx + v * slotPx
         }
-        fun tabWidthPx(value: Float): Float {
-            if (geometry.widths.size != tabsCount) return with(density) { TabMinWidth.toPx() }
-            val v = value.coerceIn(0f, (tabsCount - 1).toFloat())
-            val lower = v.toInt().coerceIn(0, tabsCount - 1)
-            val upper = (lower + 1).coerceAtMost(tabsCount - 1)
-            val t = v - lower
-            return geometry.widths[lower] + (geometry.widths[upper] - geometry.widths[lower]) * t
-        }
-        val indicatorWidth = if (measured) (geometry.widths[selectedIndex.coerceIn(0, tabsCount - 1)] / density.density).dp else TabMinWidth
 
         val panelOffset by remember(density) {
             derivedStateOf {
@@ -161,7 +123,7 @@ fun LiquidTabs(
         }
 
         var currentIndex by remember { mutableIntStateOf(selectedIndex) }
-        val drag = remember(scope, tabsCount) {
+        val drag = remember(scope, tabsCount, slotPx) {
             DampedDragAnimation(
                 animationScope = scope, initialValue = selectedIndex.toFloat(), valueRange = 0f..(tabsCount - 1).toFloat(), visibilityThreshold = .001f,
                 initialScale = 1f, pressedScale = 78f / 56f, onDragStarted = {},
@@ -171,7 +133,7 @@ fun LiquidTabs(
                     scope.launch { offsetAnimation.animateTo(0f, spring(1f, 300f, .5f)) }
                 },
                 onDrag = { _, amount ->
-                    updateValue((targetValue + amount.x / tabWidthPx(targetValue) * (if (isLtr) 1f else -1f)).coerceIn(0f, (tabsCount - 1).toFloat()))
+                    updateValue((targetValue + amount.x / slotPx * (if (isLtr) 1f else -1f)).coerceIn(0f, (tabsCount - 1).toFloat()))
                     scope.launch { offsetAnimation.snapTo(offsetAnimation.value + amount.x) }
                 },
             )
@@ -182,7 +144,7 @@ fun LiquidTabs(
 
         val highlight = remember(scope) {
             InteractiveHighlight(scope) { size, _ ->
-                Offset(indicatorLeft(drag.value) + tabWidthPx(drag.value) / 2f + panelOffset, size.height / 2f)
+                Offset(indicatorLeft(drag.value) + slotPx / 2f + panelOffset, size.height / 2f)
             }
         }
         val shape = { RoundedCornerShape(percent = 50) }
@@ -197,9 +159,9 @@ fun LiquidTabs(
                 onDrawSurface = { drawRect(container) },
             )
             .then(highlight.modifier)
-            .onGloballyPositioned { panelLeftPx = it.positionInRoot().x; panelWidthPx = it.size.width }
+            .onGloballyPositioned { panelWidthPx = it.size.width }
             .height(64.dp).padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
-            CompositionLocalProvider(LocalTabMeasure provides { index, coordinates -> measureTab(index, coordinates) }, LocalTabSlotWidth provides slot) { content() }
+            CompositionLocalProvider(LocalTabSlotWidth provides slot) { content() }
         }
 
         // the same tabs again, in the accent colour, unseen: what the indicator's lens shows through itself
@@ -217,9 +179,9 @@ fun LiquidTabs(
                 .graphicsLayer { colorFilter = ColorFilter.tint(accentColor) }, verticalAlignment = Alignment.CenterVertically, content = content)
         }
 
-        // the indicator
+        // the indicator: fills the selected slot, and slides one slot per tab while dragged.
         Box(Modifier
-            .alpha(if (measured) indicatorAlpha else 0f)
+            .alpha(indicatorAlpha)
             .graphicsLayer { translationX = indicatorLeft(drag.value) + panelOffset }
             .then(if (indicatorVisible) Modifier.then(highlight.gestureModifier).then(drag.modifier) else Modifier)   // hidden: let taps reach the tab beneath
             .drawBackdrop(
@@ -237,7 +199,7 @@ fun LiquidTabs(
                 },
                 onDrawSurface = { drawRect(Color.White.copy(alpha = if (dark) .06f else .1f)) },
             )
-            .size(width = indicatorWidth, height = 56.dp))
+            .size(width = slot, height = 56.dp))
     }
 }
 

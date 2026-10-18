@@ -5,20 +5,19 @@ package com.everettpenne.glass
  * object is unit-testable on the JVM.
  *
  * The capsule lays [count] equal-width slots inside a glass pill that pads [capsuleInset] on each side. A slot is [canonicalSlot] whenever it
- * fits; that is the original capsule's own width (260dp, from `widthIn(max = 260.dp)` in `GlassTabBar` before the content-sized rework) minus its
- * 8dp of insets, shared by its two tabs: `(260 - 2*4) / 2 = 126dp`. When the row cannot fit the capsule at the canonical width — three or four
- * tabs beside the 64dp search button on a phone — the slot scales down uniformly to fill what is available, but never below [minSlot], so a tab
- * always keeps its 44dp+ tap target and its indicator breathing room.
+ * fits; that is Apple's iOS 26 floating "tab island" tab width (the bar SwiftDdit renders through `TabView` + `.sidebarAdaptable`), about 76pt.
+ * When the row cannot fit the capsule at the canonical width — more tabs beside the 64dp search button on a narrow phone — the slot scales down
+ * uniformly to fill what is available, but never below [minSlot], so a tab always keeps its 44dp+ tap target.
  *
- * Fit model: the capsule may occupy at most `maxAvailable` = screen width − 32dp outer padding − 64dp search button. Two tabs (260dp) always fit
- * on a 360dp+ phone (264dp available), so the two-tab apps keep the original full width everywhere; three and four tabs degrade gracefully.
+ * Fit model: the capsule may occupy at most `maxAvailable` = screen width − 32dp outer padding − 64dp search button. Two tabs (160dp) and three
+ * tabs (236dp) always fit on a 360dp+ phone, so the capsule scales linearly with tab count everywhere a phone can hold it.
  */
 object TabWidths {
     /** Horizontal inset of the capsule around its tabs, on each side (the panel's 4dp padding). */
     const val capsuleInset = 4f
 
-    /** Canonical per-tab slot width (dp): the original 260dp capsule minus its 8dp of insets, over its two tabs. */
-    const val canonicalSlot = 126f
+    /** Canonical per-tab slot width (dp): Apple's iOS 26 floating tab-bar ("tab island") tab width. */
+    const val canonicalSlot = 76f
 
     /** The narrowest a slot may shrink to (dp): a 44dp+ tap target with the indicator's 10dp breathing room on each side. */
     const val minSlot = 56f

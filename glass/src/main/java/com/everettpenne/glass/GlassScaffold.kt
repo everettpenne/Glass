@@ -153,9 +153,9 @@ data class GlassTabItem(override val route: String, override val label: String, 
  * The floating tab bar, laid out as in the original: a glass capsule with [tabs] at the bottom left (the chosen one in a darker pill with the
  * accent), and, if given, [search] as its own round glass button at the bottom right. [selected] may be [search] (then no pill is shown) or null.
  *
- * The capsule is sized from [TabWidths]: each tab gets the original two-tab slot width (126dp, i.e. the old 260dp capsule), scaling linearly with
- * the tab count and down uniformly when three or four tabs beside [search] cannot fit a phone. The icon and label stay centred in their slot and
- * the selector hugs the active tab's measured content.
+ * The capsule is sized from [TabWidths]: each tab is a fixed slot (Apple's iOS 26 floating tab-bar width, ~76dp), so the capsule scales linearly
+ * with the tab count (2 tabs ≈ 160dp, 3 ≈ 236dp) and down uniformly only when more tabs beside [search] cannot fit a phone. The icon and label
+ * stay centred in their slot and the glass selector fills the active slot exactly.
  */
 @Composable
 fun <T : GlassTabSpec> GlassTabBar(tabs: List<T>, selected: T?, onSelect: (T) -> Unit, modifier: Modifier = Modifier, search: T? = null) {
@@ -166,7 +166,7 @@ fun <T : GlassTabSpec> GlassTabBar(tabs: List<T>, selected: T?, onSelect: (T) ->
             indicatorVisible = selected != null && selected != search, modifier = Modifier.weight(1f)) {
             tabs.forEachIndexed { index, tab ->
                 val on = tab == selected
-                LiquidTab(index, { onSelect(tab) }, Modifier.semantics { contentDescription = tab.label }) {
+                LiquidTab({ onSelect(tab) }, Modifier.semantics { contentDescription = tab.label }) {
                     Icon(tab.icon, null, tint = if (on) accent else ink, modifier = Modifier.size(26.dp))
                     Text(tab.label, style = IosType.caption1.copy(fontWeight = FontWeight.SemiBold), color = if (on) accent else ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
