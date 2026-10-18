@@ -47,6 +47,25 @@ import kotlinx.coroutines.delay
 /** Width over height of what [player] is showing, or 16:9 before the first frame. */
 fun videoAspectRatio(player: Player): Float = player.videoSize.ratio()
 
+/**
+ * Picture-in-picture for full-screen video, shared process-wide so the host activity and the composables agree without threading a player
+ * reference through every layer. [player] is the [FullscreenVideo]'s player while it is up; [active] is true while the activity is in the
+ * small window. The host calls [enterVideoPip] from its `onUserLeaveHint`.
+ */
+object VideoPip {
+    @Volatile var player: Player? = null
+    @Volatile var active: Boolean = false
+}
+
+/** Enters picture-in-picture for the currently playing full-screen video, if any. Returns true when it did. */
+fun enterVideoPip(activity: Activity): Boolean {
+    val p = VideoPip.player ?: return false
+    if (!p.isPlaying) return false
+    if (!activity.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) return false
+    VideoPip.active = true
+    return activity.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().setAspectRatio(android.util.Rational(16, 9)).build())
+}
+
 private fun VideoSize.ratio(): Float = if (width > 0 && height > 0) width * pixelWidthHeightRatio / height else 16f / 9f
 
 /** Just the picture: a Media3 surface bound to [player] while [enabled]. Pass `enabled = false` while a [FullscreenVideo] has the player. */
@@ -86,7 +105,8 @@ fun FullscreenVideo(player: Player, title: String? = null, onDismiss: () -> Unit
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
         }
         player.addListener(listener)
-        onDispose { player.removeListener(listener) }
+        VideoPip.player = player
+        onDispose { player.removeListener(listener); if (VideoPip.player === player) VideoPip.player = null }
     }
     // the clock only needs to move while the controls are showing; hidden, nothing is redrawn
     LaunchedEffect(player, controls) { if (controls) while (true) { position = player.currentPosition; duration = player.duration.coerceAtLeast(0); delay(250) } }
