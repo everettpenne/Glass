@@ -49,14 +49,17 @@ import kotlin.math.sign
 /** How much a tab swells while the indicator is pressed (the Backdrop catalog's `LocalLiquidBottomTabScale`). */
 internal val LocalTabScale = staticCompositionLocalOf { { 1f } }
 
-/** The minimum width a tab slot takes, so even the shortest label keeps a 44dp+ target and the indicator keeps its breathing room. */
-private val TabMinWidth = 56.dp
+/** The minimum width a tab's own content may take, so even the shortest label keeps a 44dp+ target and the indicator keeps its breathing room. */
+private val TabMinWidth = TabWidths.minSlot.dp
 
-/** Horizontal padding inside each tab slot: the breathing room the indicator pill gives the icon and label it wraps. */
+/** Horizontal padding inside each tab's content: the breathing room the indicator pill gives the icon and label it wraps. */
 private val TabSlotPadding = 10.dp
 
-/** Lets [LiquidTab] report its measured slot back to [LiquidTabs], which sizes and positions the indicator from them. */
+/** Lets [LiquidTab] report its measured content back to [LiquidTabs], which sizes and positions the indicator from it. */
 private val LocalTabMeasure = staticCompositionLocalOf<((Int, LayoutCoordinates) -> Unit)?> { null }
+
+/** The fixed slot width [LiquidTabs] gives each tab; the icon and label centre inside it while the indicator hugs their measured content. */
+private val LocalTabSlotWidth = staticCompositionLocalOf { TabMinWidth }
 
 /** Measured slot geometry (physical px) for each tab, so the indicator hugs the active tab even when labels differ in width. */
 private class TabGeometry(count: Int) {
@@ -64,16 +67,26 @@ private class TabGeometry(count: Int) {
     val widths = mutableStateListOf<Int>().apply { repeat(count) { add(0) } }
 }
 
-/** One tab of [LiquidTabs]: sized to its icon and label with a minimum, swells with the indicator, and selects itself when tapped. */
+/**
+ * One tab of [LiquidTabs]: a fixed-width slot (the width [LiquidTabs] computed from [TabWidths]) whose icon and label are content-sized and
+ * centred inside it. The whole slot is the tap target and swells with the indicator; only the inner content is reported to [LocalTabMeasure], so
+ * the indicator hugs the real icon+label width while the slots spread evenly across the capsule.
+ */
 @Composable
 fun RowScope.LiquidTab(index: Int, onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val scale = LocalTabScale.current
     val measure = LocalTabMeasure.current
-    Column(modifier
-        .onGloballyPositioned { measure?.invoke(index, it) }
+    val slot = LocalTabSlotWidth.current
+    Box(modifier
+        .width(slot).fillMaxHeight()
         .clip(RoundedCornerShape(percent = 50)).clickable(interactionSource = null, indication = null, role = Role.Tab, onClick = onClick)
-        .widthIn(min = TabMinWidth).padding(horizontal = TabSlotPadding).fillMaxHeight().graphicsLayer { val s = scale(); scaleX = s; scaleY = s },
-        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally, content = content)
+        .graphicsLayer { val s = scale(); scaleX = s; scaleY = s },
+        contentAlignment = Alignment.Center) {
+        Column(Modifier
+            .onGloballyPositioned { measure?.invoke(index, it) }
+            .widthIn(min = TabMinWidth).padding(horizontal = TabSlotPadding).fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally, content = content)
+    }
 }
 
 /**
@@ -98,14 +111,18 @@ fun LiquidTabs(
     val latestSelected by rememberUpdatedState(selectedIndex)
     val latestSelect by rememberUpdatedState(onTabSelected)
 
-    Box(modifier, contentAlignment = Alignment.CenterStart) {
+    BoxWithConstraints(modifier, contentAlignment = Alignment.CenterStart) {
         val density = LocalDensity.current
+        val slot = remember(tabsCount, constraints.maxWidth, density) {
+            TabWidths.slots(tabsCount, constraints.maxWidth / density.density).dp
+        }
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
         val scope = rememberCoroutineScope()
         val offsetAnimation = remember { Animatable(0f) }
 
-        // Measured tab-slot geometry (physical px). Positions are each slot's left edge in the root; widths are the slots' widths. Before the first
-        // layout they are all zero, so the indicator stays hidden until real numbers arrive (one frame).
+        // Measured tab-content geometry (physical px): each tab reports its centred icon+label box, not its full slot. Positions are the content's
+        // left edge in the root and widths its width, so the indicator hugs the real content while the slots spread evenly. Before the first layout
+        // they are all zero, so the indicator stays hidden until real numbers arrive (one frame).
         val geometry = remember(tabsCount) { TabGeometry(tabsCount) }
         var panelLeftPx by remember { mutableFloatStateOf(0f) }
         var panelWidthPx by remember { mutableIntStateOf(0) }
@@ -182,11 +199,11 @@ fun LiquidTabs(
             .then(highlight.modifier)
             .onGloballyPositioned { panelLeftPx = it.positionInRoot().x; panelWidthPx = it.size.width }
             .height(64.dp).padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
-            CompositionLocalProvider(LocalTabMeasure provides { index, coordinates -> measureTab(index, coordinates) }) { content() }
+            CompositionLocalProvider(LocalTabMeasure provides { index, coordinates -> measureTab(index, coordinates) }, LocalTabSlotWidth provides slot) { content() }
         }
 
         // the same tabs again, in the accent colour, unseen: what the indicator's lens shows through itself
-        CompositionLocalProvider(LocalTabScale provides { lerp(1f, 1.2f, drag.pressProgress) }) {
+        CompositionLocalProvider(LocalTabScale provides { lerp(1f, 1.2f, drag.pressProgress) }, LocalTabSlotWidth provides slot) {
             Row(Modifier
                 .clearAndSetSemantics {}.alpha(0f).layerBackdrop(tabsBackdrop)
                 .graphicsLayer { translationX = panelOffset }

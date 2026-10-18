@@ -16,10 +16,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.everettpenne.glass.*
 
-private val tabs = listOf(
+private val tabs2 = listOf(
+    GlassTabItem("home", "Home", Icons.Rounded.Home),
+    GlassTabItem("discover", "Discover", Icons.Rounded.Explore),
+)
+private val tabs3 = listOf(
     GlassTabItem("home", "Home", Icons.Rounded.Home),
     GlassTabItem("library", "Library", Icons.Rounded.VideoLibrary),
     GlassTabItem("music", "Music", Icons.Rounded.MusicNote),
+)
+private val tabs4 = listOf(
+    GlassTabItem("home", "Home", Icons.Rounded.Home),
+    GlassTabItem("library", "Library", Icons.Rounded.VideoLibrary),
+    GlassTabItem("music", "Music", Icons.Rounded.MusicNote),
+    GlassTabItem("profile", "Profile", Icons.Rounded.Person),
 )
 private val search = GlassTabItem("search", "Search", Icons.Rounded.Search)
 
@@ -31,7 +41,10 @@ private val stripes = listOf(Color(0xFFFF9F0A), Color(0xFF34C759), Color(0xFF0A8
  */
 @Composable
 fun GalleryScreen() {
+    var tabCount by remember { mutableIntStateOf(3) }
+    val tabs = when (tabCount) { 2 -> tabs2; 4 -> tabs4; else -> tabs3 }
     var tab by remember { mutableStateOf<GlassTabItem?>(tabs[0]) }
+    val selected = if (tab in tabs) tab else tabs[0]
     var chip by remember { mutableStateOf(true) }
     var switch by remember { mutableStateOf(true) }
     var slider by remember { mutableFloatStateOf(.4f) }
@@ -40,7 +53,7 @@ fun GalleryScreen() {
     var sheet by remember { mutableStateOf(false) }
     var destructive by remember { mutableStateOf(false) }
 
-    CompositionLocalProvider(LocalTabBar provides { GlassTabBar(tabs, tab, { tab = it }, search = search) }) {
+    CompositionLocalProvider(LocalTabBar provides { GlassTabBar(tabs, selected, { tab = it }, search = search) }) {
     GlassScreen(
         bars = {
             Column(Modifier.align(Alignment.TopCenter)) {
@@ -59,6 +72,12 @@ fun GalleryScreen() {
     ) { contentPadding ->
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 24.dp, bottom = contentPadding.calculateBottomPadding() + 40.dp, start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item { Header("Tab bar") }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    listOf(2, 3, 4).forEach { n -> GlassChip(tabCount == n, { tabCount = n }) { Text("$n tabs") } }
+                }
+            }
             item { Header("Buttons") }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

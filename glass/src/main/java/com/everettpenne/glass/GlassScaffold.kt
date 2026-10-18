@@ -152,6 +152,10 @@ data class GlassTabItem(override val route: String, override val label: String, 
 /**
  * The floating tab bar, laid out as in the original: a glass capsule with [tabs] at the bottom left (the chosen one in a darker pill with the
  * accent), and, if given, [search] as its own round glass button at the bottom right. [selected] may be [search] (then no pill is shown) or null.
+ *
+ * The capsule is sized from [TabWidths]: each tab gets the original two-tab slot width (126dp, i.e. the old 260dp capsule), scaling linearly with
+ * the tab count and down uniformly when three or four tabs beside [search] cannot fit a phone. The icon and label stay centred in their slot and
+ * the selector hugs the active tab's measured content.
  */
 @Composable
 fun <T : GlassTabSpec> GlassTabBar(tabs: List<T>, selected: T?, onSelect: (T) -> Unit, modifier: Modifier = Modifier, search: T? = null) {
@@ -159,7 +163,7 @@ fun <T : GlassTabSpec> GlassTabBar(tabs: List<T>, selected: T?, onSelect: (T) ->
     val accent = LocalGlassColors.current.accent
     Row(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         LiquidTabs(selectedIndex = tabs.indexOf(selected).coerceAtLeast(0), onTabSelected = { onSelect(tabs[it]) }, tabsCount = tabs.size,
-            indicatorVisible = selected != null && selected != search, modifier = Modifier) {
+            indicatorVisible = selected != null && selected != search, modifier = Modifier.weight(1f)) {
             tabs.forEachIndexed { index, tab ->
                 val on = tab == selected
                 LiquidTab(index, { onSelect(tab) }, Modifier.semantics { contentDescription = tab.label }) {
@@ -168,7 +172,6 @@ fun <T : GlassTabSpec> GlassTabBar(tabs: List<T>, selected: T?, onSelect: (T) ->
                 }
             }
         }
-        Spacer(Modifier.weight(1f))
         if (search != null) GlassCircleButton({ onSelect(search) }, size = 64.dp, description = search.label) {
             Icon(search.icon, null, tint = if (selected == search) accent else ink, modifier = Modifier.size(30.dp))
         }

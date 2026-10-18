@@ -14,6 +14,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    testOptions { unitTests.isReturnDefaultValues = true }
 }
 
 dependencies {
@@ -25,4 +26,6 @@ dependencies {
     api("androidx.compose.material3:material3")
     api("androidx.compose.material:material-icons-extended")
     api("io.github.kyant0:backdrop:1.0.0")
+
+    testImplementation("junit:junit:4.13.2")
 }
