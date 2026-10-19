@@ -54,17 +54,47 @@ fun videoAspectRatio(player: Player): Float = player.videoSize.ratio()
  * small window. The host calls [enterVideoPip] from its `onUserLeaveHint`.
  */
 object VideoPip {
-    @Volatile var player: Player? = null
-    @Volatile var active: Boolean = false
+    /** Compose state, not plain fields: the host shell draws the small window from these, so it must recompose when they change. */
+    var player: Player? by mutableStateOf(null)
+    var active: Boolean by mutableStateOf(false)
+    /** Whether a [FullscreenVideo] is up. It leaves when the small window opens (the shell takes over the picture), and must not let go of the player then. */
+    internal var fullscreenUp: Boolean = false
+
+    /**
+     * Called by the host activity from `onPictureInPictureModeChanged`. When the small window closes and no full-screen player is showing,
+     * the shared player is let go, so a later leave hint cannot reach a player that its screen has since released.
+     */
+    fun pipChanged(inPip: Boolean) {
+        active = inPip
+        if (!inPip && !fullscreenUp) player = null
+    }
 }
 
-/** Enters picture-in-picture for the currently playing full-screen video, if any. Returns true when it did. */
+/** The shape Android will take for a picture-in-picture window: it refuses (by throwing) anything wider than 2.39:1 or taller than 1:2.39. */
+fun pipRatio(ratio: Float): Float = if (ratio.isNaN() || ratio <= 0f) 16f / 9f else ratio.coerceIn(1f / 2.39f, 2.39f)
+
+/** [pipRatio] as the [android.util.Rational] the platform wants. */
+fun pipRational(ratio: Float): android.util.Rational = android.util.Rational((pipRatio(ratio) * 1000f).toInt(), 1000)
+
+/**
+ * Enters picture-in-picture with [params] and says whether it did, instead of throwing: the platform throws when the device has no PiP, the
+ * activity is already in it, or the params are out of range, and a button or a leave hint must never crash the app over that.
+ */
+fun enterPip(activity: Activity, params: android.app.PictureInPictureParams): Boolean {
+    if (!activity.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) return false
+    if (activity.isInPictureInPictureMode) return false
+    return try { activity.enterPictureInPictureMode(params) } catch (_: IllegalStateException) { false } catch (_: IllegalArgumentException) { false }
+}
+
+/** Enters picture-in-picture for the currently playing full-screen video, if any, in the video's own shape. Returns true when it did. */
 fun enterVideoPip(activity: Activity): Boolean {
     val p = VideoPip.player ?: return false
     if (!p.isPlaying) return false
-    if (!activity.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)) return false
+    // Flagged first so the full-screen dialog is already gone when the window shrinks; undone if the system said no.
     VideoPip.active = true
-    return activity.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().setAspectRatio(android.util.Rational(16, 9)).build())
+    val entered = enterPip(activity, android.app.PictureInPictureParams.Builder().setAspectRatio(pipRational(videoAspectRatio(p))).build())
+    if (!entered) VideoPip.active = false
+    return entered
 }
 
 private fun VideoSize.ratio(): Float = if (width > 0 && height > 0) width * pixelWidthHeightRatio / height else 16f / 9f
@@ -106,8 +136,12 @@ fun FullscreenVideo(player: Player, title: String? = null, onDismiss: () -> Unit
             override fun onIsPlayingChanged(isPlaying: Boolean) { playing = isPlaying }
         }
         player.addListener(listener)
-        VideoPip.player = player
-        onDispose { player.removeListener(listener); if (VideoPip.player === player) VideoPip.player = null }
+        VideoPip.player = player; VideoPip.fullscreenUp = true
+        onDispose {
+            player.removeListener(listener); VideoPip.fullscreenUp = false
+            // Going into the small window closes this screen too; the shell still needs the player then, to show its picture.
+            if (VideoPip.player === player && !VideoPip.active) VideoPip.player = null
+        }
     }
     // the clock only needs to move while the controls are showing; hidden, nothing is redrawn
     LaunchedEffect(player, controls) { if (controls) while (true) { position = player.currentPosition; duration = player.duration.coerceAtLeast(0); delay(250) } }

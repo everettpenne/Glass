@@ -14,6 +14,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    testOptions { unitTests.isReturnDefaultValues = true }
 }
 
 dependencies {
@@ -23,4 +24,5 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.7.1")
     implementation("io.coil-kt.coil3:coil-compose:3.2.0")
     implementation("androidx.core:core-ktx:1.16.0")
+    testImplementation("junit:junit:4.13.2")
 }
