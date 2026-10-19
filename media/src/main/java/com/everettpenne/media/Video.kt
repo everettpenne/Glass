@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -158,7 +159,11 @@ fun FullscreenVideo(player: Player, title: String? = null, onDismiss: () -> Unit
                         Text(clock(scrub?.let { (it * d).toLong() } ?: position), style = IosType.caption1, color = Color.White)
                         Spacer(Modifier.weight(1f))
                         Text("-" + clock(duration - (scrub?.let { (it * d).toLong() } ?: position)), style = IosType.caption1, color = Color.White)
-                        Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Control({ activity?.let { enterVideoPip(it) } }, "Picture in picture", size = 36.dp) {
+                            Icon(Icons.Rounded.PictureInPictureAlt, null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
                         Control({ muted = !muted; player.volume = if (muted) 0f else 1f }, if (muted) "Unmute" else "Mute", size = 36.dp) {
                             Icon(if (muted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp, null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
