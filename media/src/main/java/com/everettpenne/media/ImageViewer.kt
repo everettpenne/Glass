@@ -12,6 +12,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -38,25 +43,31 @@ val LocalImageViewer = compositionLocalOf<(List<String>, Int) -> Unit> { { _, _ 
 
 /** Draw once at the root: it provides [LocalImageViewer] to the content and shows the viewer when something asks for it. */
 @Composable
-fun ImageViewerHost(content: @Composable () -> Unit) {
+fun ImageViewerHost(saveAlbum: String? = null, content: @Composable () -> Unit) {
     var request by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
     CompositionLocalProvider(LocalImageViewer provides { urls, i -> request = urls to i }) {
         content()
-        request?.let { (urls, i) -> ImageViewer(urls, i) { request = null } }
+        request?.let { (urls, i) -> ImageViewer(urls, i, saveAlbum = saveAlbum) { request = null } }
     }
 }
 
 /**
  * Full-screen images on black: pinch to zoom (up to 6x) and drag to pan, double-tap to zoom in and out, swipe sideways between images, swipe
- * down (or up) to dismiss, tap to hide or show the controls.
+ * down (or up) to dismiss, tap to hide or show the controls. With a [saveAlbum], a Save button copies the picture on screen into the phone's photo
+ * library under Pictures/<saveAlbum> (see [MediaSaver]).
  */
 @Composable
-fun ImageViewer(urls: List<String>, start: Int, onDismiss: () -> Unit) {
+fun ImageViewer(urls: List<String>, start: Int, saveAlbum: String? = null, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         val pager = rememberPagerState(initialPage = start.coerceIn(0, (urls.size - 1).coerceAtLeast(0))) { urls.size }
         var dragY by remember { mutableFloatStateOf(0f) }
         var zoomed by remember { mutableStateOf(false) }
         var chrome by remember { mutableStateOf(true) }
+        var saving by remember { mutableStateOf(false) }
+        var notice by remember { mutableStateOf<String?>(null) }
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        LaunchedEffect(notice) { if (notice != null) { delay(2200); notice = null } }
         val fade = (1f - abs(dragY) / 900f).coerceIn(0f, 1f)
         // like the video controls: no inherited page backdrop, so the close button is a plain dark disc on black
         CompositionLocalProvider(LocalGlassBackdrop provides null) {
@@ -68,9 +79,25 @@ fun ImageViewer(urls: List<String>, start: Int, onDismiss: () -> Unit) {
                 GlassCircleButton(onDismiss, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp).background(Color.Black.copy(alpha = .4f), CircleShape), size = 44.dp, description = "Close") {
                     Icon(Icons.Rounded.Close, null, tint = Color.White)
                 }
+                if (saveAlbum != null && urls.isNotEmpty()) GlassCircleButton({
+                    if (!saving) { saving = true; scope.launch {
+                        notice = when (val r = MediaSaver.saveImage(context, urls[pager.currentPage], saveAlbum)) {
+                            is MediaSaver.Result.Saved -> "Saved to Pictures/${r.album}"
+                            is MediaSaver.Result.Failed -> r.reason
+                        }
+                        saving = false
+                    } }
+                }, Modifier.align(Alignment.TopStart).statusBarsPadding().padding(16.dp).background(Color.Black.copy(alpha = .4f), CircleShape), size = 44.dp, description = "Save to Photos") {
+                    if (saving) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    else Icon(Icons.Rounded.Download, null, tint = Color.White)
+                }
                 if (urls.size > 1) Text("${pager.currentPage + 1} / ${urls.size}", style = IosType.footnote, color = Color.White,
                     modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(20.dp)
                         .background(Color.Black.copy(alpha = .45f), CircleShape).padding(horizontal = 14.dp, vertical = 6.dp))
+            }
+            notice?.let { n ->
+                Text(n, style = IosType.subheadline, color = Color.White, modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 72.dp)
+                    .background(Color.Black.copy(alpha = .7f), CircleShape).padding(horizontal = 16.dp, vertical = 8.dp))
             }
         }
         }

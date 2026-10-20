@@ -1,6 +1,6 @@
 # Glass
 
-The iOS 26 "liquid glass" UI kit shared by Seekur, Spice and Thumper: glass surfaces, controls, bars, tabs, slider, menus, alerts, sheets, the Apple HIG type scale set in Inter, and the iOS-style Material theme. Built on [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass) 1.0.0 (kept on purpose: 2.x needs compileSdk 37, AGP 9 and Kotlin 2.4) and Jetpack Compose.
+The iOS 26 "liquid glass" UI kit shared by Seekur, Spice, Thumper and Sietch: glass surfaces, controls, bars, tabs, slider, menus, alerts, sheets, the Apple HIG type scale set in Inter, and the iOS-style Material theme. Built on [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass) 1.0.0 (kept on purpose: 2.x needs compileSdk 37, AGP 9 and Kotlin 2.4) and Jetpack Compose.
 
 Package `com.everettpenne.glass`, module `:glass`. Apps consume it with a composite build, so edits show up immediately and nothing is published:
 
@@ -38,10 +38,12 @@ It lists the repo's releases (not `/releases/latest`, which hides pre-releases),
 
 ## Media
 
-`:media` (`implementation("com.everettpenne:media")`, package `com.everettpenne.media`) is the full-screen image viewer and full-screen video:
+`:media` (`implementation("com.everettpenne:media")`, package `com.everettpenne.media`) is the full-screen image viewer, full-screen video, and saving pictures:
 
 ```kotlin
-ImageViewerHost { /* content; anything inside can call LocalImageViewer.current(listOf(url), 0) */ }   // or provide LocalImageViewer yourself and draw ImageViewer(urls, start) {}
+ImageViewerHost(saveAlbum = "Seekur") { /* content; anything inside can call LocalImageViewer.current(listOf(url), 0) */ }   // or provide LocalImageViewer yourself and draw ImageViewer(urls, start, saveAlbum) {}
+VideoViewerHost { /* anything inside can call LocalVideoViewer.current(uri, title): a full-screen player that owns its own ExoPlayer */ }
+MediaSaver.saveImage(context, url, "Seekur")            // copies the original bytes into Pictures/Seekur through MediaStore (no permission)
 FullscreenVideo(player, title) { /* onDismiss */ }     // any Media3 Player: an ExoPlayer, or a MediaController of a playback service
 VideoSurface(player, enabled = !fullscreen)             // the picture, for the inline view; disable it while FullscreenVideo has the player
 ```
