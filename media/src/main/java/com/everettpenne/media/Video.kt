@@ -109,11 +109,6 @@ fun VideoSurface(player: Player?, modifier: Modifier = Modifier, enabled: Boolea
 
 private tailrec fun Context.activity(): Activity? = when (this) { is Activity -> this; is ContextWrapper -> baseContext.activity(); else -> null }
 
-private fun clock(ms: Long): String {
-    val s = (ms.coerceAtLeast(0) / 1000).toInt()
-    return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
-}
-
 /**
  * [player]'s video full screen on black, system bars hidden. Wide video turns the phone to landscape while it is up (and back after). Tap shows or
  * hides the controls (they hide themselves after a few seconds of playing); double-tap the left or right half to skip 10 seconds; Back or the
@@ -186,14 +181,10 @@ fun FullscreenVideo(player: Player, title: String? = null, onDismiss: () -> Unit
                     Icon(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null, tint = Color.White, modifier = Modifier.size(42.dp))
                 }
                 Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().displayCutoutPadding().padding(horizontal = 20.dp, vertical = 12.dp)) {
-                    val d = duration.coerceAtLeast(1)
-                    GlassSlider(value = scrub ?: (position.toFloat() / d).coerceIn(0f, 1f), onValueChange = { scrub = it },
-                        onValueChangeFinished = { scrub?.let { player.seekTo((it * d).toLong()) }; scrub = null }, description = "Seek")
+                    PlayerScrubber(position, duration, onSeek = { player.seekTo(it); position = it }, timeColor = Color.White,
+                        onScrubbing = { scrub = if (it) 0f else null })
                     Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(clock(scrub?.let { (it * d).toLong() } ?: position), style = IosType.caption1, color = Color.White)
                         Spacer(Modifier.weight(1f))
-                        Text("-" + clock(duration - (scrub?.let { (it * d).toLong() } ?: position)), style = IosType.caption1, color = Color.White)
-                        Spacer(Modifier.width(12.dp))
                         Control({ activity?.let { enterVideoPip(it) } }, "Picture in picture", size = 36.dp) {
                             Icon(Icons.Rounded.PictureInPictureAlt, null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
