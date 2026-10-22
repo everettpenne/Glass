@@ -50,6 +50,19 @@ VideoSurface(player, enabled = !fullscreen)             // the picture, for the 
 
 `ImageViewer`: pinch to zoom up to 6x, pan, double-tap to zoom, swipe between images, swipe down to dismiss, tap to hide the controls. `FullscreenVideo`: black, system bars hidden, turns the phone to landscape for wide video and back afterwards, glass controls (play/pause, seek slider, remaining time, mute) that hide while playing, tap to show or hide, double-tap either half to skip 10 s, Back to leave. The player is the caller's, so playback carries on across the switch with no re-buffering.
 
+## Browser
+
+`implementation("com.everettpenne:browser")`. A built-in web browser for the apps, so a link opens over the app instead of sending you elsewhere.
+Draw `BrowserHost(inApp = setting) { … }` once at the root: every `LocalUriHandler.openUri` (and `LocalBrowser`) then opens web pages in
+`GlassBrowser`, and mail, phone, map and store links in the app for them. With `inApp` off, pages open in Vanadium when it is installed, else the
+phone's browser.
+
+`GlassBrowser` is a WebView between glass bars: Done, the site (tap to type an address or a search), a menu (reload, find on page, desktop site,
+copy link, open in Vanadium, clear site data), and back, forward, share and open-outside along the bottom. On GrapheneOS Android's WebView *is*
+Vanadium's, so pages render in Vanadium's hardened Chromium. Third-party cookies are refused, pages get no location, camera or microphone, no file
+or content access and no mixed content; downloads go to Downloads; videos can go full screen; upload fields open the file picker. Address
+handling (`BrowserUrls`) is unit-tested.
+
 ## Gallery
 
 `:gallery` is a sample app showing every component on one page over striped content, with an instrumented test that renders and exercises it. Open it after any change to the glass recipe:

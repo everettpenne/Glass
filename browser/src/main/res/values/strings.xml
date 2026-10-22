@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_done">Done</string>
+    <string name="browser_reload">Reload</string>
+    <string name="browser_stop">Stop</string>
+    <string name="browser_find">Find on page</string>
+    <string name="browser_find_hint">Find on page</string>
+    <string name="browser_desktop">Desktop site</string>
+    <string name="browser_copy">Copy link</string>
+    <string name="browser_open_vanadium">Open in Vanadium</string>
+    <string name="browser_open_outside">Open in browser</string>
+    <string name="browser_clear">Clear cookies and site data</string>
+    <string name="browser_cleared">Cookies and site data cleared</string>
+    <string name="browser_crashed">This page stopped working.</string>
+    <string name="browser_downloading">Downloading %1$s to Downloads</string>
+    <string name="browser_cant_download">This file can\'t be downloaded here. Open the page in your browser.</string>
+</resources>
