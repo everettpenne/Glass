@@ -1,6 +1,6 @@
 # Glass
 
-The iOS 26 "liquid glass" UI kit shared by Seekur, Spice, Thumper and Sietch: glass surfaces, controls, bars, tabs, slider, menus, alerts, sheets, the Apple HIG type scale set in Inter, and the iOS-style Material theme. Built on [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass) 1.0.0 (kept on purpose: 2.x needs compileSdk 37, AGP 9 and Kotlin 2.4) and Jetpack Compose.
+The iOS 26 "liquid glass" UI kit shared by Seekur, Spice, Thumper, Sietch and Baliset: glass surfaces, controls, bars, tabs, slider, menus, alerts, sheets, the Apple HIG type scale set in Inter, and the iOS-style Material theme. Built on [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass) 1.0.0 (kept on purpose: 2.x needs compileSdk 37, AGP 9 and Kotlin 2.4) and Jetpack Compose.
 
 Package `com.everettpenne.glass`, module `:glass`. Apps consume it with a composite build, so edits show up immediately and nothing is published:
 
