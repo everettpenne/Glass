@@ -48,7 +48,13 @@ FullscreenVideo(player, title) { /* onDismiss */ }     // any Media3 Player: an 
 VideoSurface(player, enabled = !fullscreen)             // the picture, for the inline view; disable it while FullscreenVideo has the player
 ```
 
+`GlassMiniPlayer(title, subtitle, artwork, progress, playing, onOpen, onToggle, onNext)` is the now-playing capsule for above the tab bar: cover, two lines, play/pause, optional next, and a hairline of progress along its bottom edge. It is hidden by the caller when nothing is playing.
+
 `ImageViewer`: pinch to zoom up to 6x, pan, double-tap to zoom, swipe between images, swipe down to dismiss, tap to hide the controls. `FullscreenVideo`: black, system bars hidden, turns the phone to landscape for wide video and back afterwards, glass controls (play/pause, seek slider, remaining time, mute) that hide while playing, tap to show or hide, double-tap either half to skip 10 s, Back to leave. The player is the caller's, so playback carries on across the switch with no re-buffering.
+
+## Rows and lists
+
+`glass/GlassRows.kt` has the list pieces every app was copying: `GlassSectionHeader` (a heading with optional trailing content), `GlassGroup` (an inset-grouped card for rows), `GlassListRow` (leading content, title, subtitle, trailing content, whole row tappable), `GlassRowDivider`, `GlassSearchField` (the clear-glass search capsule, with optional auto-focus) and `GlassEmptyState` (the glass disc, title, message and one optional action used for "nothing here yet"). They are deliberately flat rather than glass-on-glass so a long page stays smooth under the refracting bars.
 
 ## Browser
 

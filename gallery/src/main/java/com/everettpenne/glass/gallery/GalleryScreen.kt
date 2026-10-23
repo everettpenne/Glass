@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -48,6 +49,7 @@ fun GalleryScreen() {
     var chip by remember { mutableStateOf(true) }
     var switch by remember { mutableStateOf(true) }
     var slider by remember { mutableFloatStateOf(.4f) }
+    var searchText by remember { mutableStateOf("") }
     var menu by remember { mutableStateOf(false) }
     var alert by remember { mutableStateOf(false) }
     var sheet by remember { mutableStateOf(false) }
@@ -104,6 +106,30 @@ fun GalleryScreen() {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     GlassButton("Alert", { destructive = false; alert = true }); GlassButton("Destructive", { destructive = true; alert = true }); GlassButton("Sheet", { sheet = true })
                 }
+            }
+            item { Header("Rows and lists") }
+            item { GlassSearchField(searchText, { searchText = it }, placeholder = "Search the kit") }
+            item {
+                GlassGroup {
+                    GlassListRow(
+                        "Library", subtitle = "A grouped row with a leading icon", onClick = {},
+                        leading = { Icon(Icons.Rounded.LibraryMusic, null, tint = LocalGlassColors.current.accent, modifier = Modifier.size(22.dp)) },
+                        trailing = { Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    )
+                    GlassRowDivider()
+                    GlassListRow(
+                        "Shuffle", subtitle = "Rows light up instead of rippling", onClick = {},
+                        leading = { Icon(Icons.Rounded.Shuffle, null, tint = LocalGlassColors.current.accent, modifier = Modifier.size(22.dp)) },
+                        trailing = { LiquidSwitch(switch, { switch = it }) },
+                    )
+                }
+            }
+            item {
+                GlassEmptyState(
+                    Icons.Rounded.LibraryMusic, "Nothing here yet",
+                    "The same friendly empty state on every page, with room for one action.",
+                    action = { GlassButton("Try again", {}) },
+                )
             }
             item { Header("Backdrop") }
             items(stripes) { c -> Box(Modifier.fillMaxWidth().height(80.dp).background(Brush.horizontalGradient(listOf(c, c.copy(alpha = .35f))), MaterialTheme.shapes.large)) }
