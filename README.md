@@ -22,6 +22,12 @@ GlassTheme(GlassColors(accent = brandColor, red = ..., green = ...)) {   // Mate
 
 Tabs are anything implementing `GlassTabSpec(route, label, icon)`; the label is the content description. `GlassTabBar(tabs, selected, onSelect, search = ...)` draws the capsule from `tabs` and an optional round search button.
 
+## Shapes, motion and feel
+
+`SquircleShape` is the superellipse corner iOS's icons use (n = 5; the launcher draws its icons, folders and widgets with it), `GlassCorner` the suite's
+corner scale (8 / 16 / 24, 26 for a widget or grouped card, an icon's 22.37 percent), and `GlassFeel` the springs (`press`, `settle`, `open`, `calm`) and
+haptic cues (`TICK`, `TOGGLE`, `CONFIRM`, `LONG_PRESS`) every control uses. `tools/icons` regenerates the suite's launcher icons from one recipe.
+
 ## Updater
 
 `:updater` (`implementation("com.everettpenne:updater")`, package `com.everettpenne.updater`) adds in-app updates from GitHub releases:

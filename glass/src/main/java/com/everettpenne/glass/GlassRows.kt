@@ -52,7 +52,7 @@ fun GlassSectionHeader(title: String, modifier: Modifier = Modifier, trailing: @
 @Composable
 fun GlassGroup(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(26.dp)),
+        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, GlassCorner.cardShape),
         content = content,
     )
 }
