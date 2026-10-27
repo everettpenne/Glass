@@ -74,7 +74,11 @@ PlayerHost {                       // once, at the root; provides LocalVideoView
 - **Controls:** previous / next through the list, ±10 s, speed (0.25× to 4×), fit / fill / stretch, repeat (off, all, one), lock, rotate, picture-in-picture.
 - **Tracks:** audio and subtitle tracks by name and language, subtitle files found beside the video (`name.srt`, `name.en.vtt`, `.ass`) and any file you pick, and a subtitle size.
 - **Remembers:** where each video was left (not for under 30 s, the first 5 s or the last 10 s), asked once with a "Start over" button; the subtitle size.
-- **Behaves:** follows a wide video to landscape, keeps the screen on while playing, takes audio focus, pauses when headphones come out or the app is left (not in picture-in-picture), and plays sound files with the same controls.
+- **Seek thumbnails:** a picture of the moment under the scrubber's thumb and under a seek swipe, for files and content addresses (a stream is not sampled).
+- **Background audio:** playback lives in `PlayerService` (media3 session), so a sound file carries on when the app is left, with the system media notification and lock-screen controls; a video does the same when "Keep playing when I leave" is on (the picture waits). Closing the player stops it. The service is not exported.
+- **Behaves:** follows a wide video to landscape, keeps the screen on while playing, takes audio focus, pauses when headphones come out, pauses a video that is left (unless the above), offers picture-in-picture for video only, and plays sound files with the same controls.
+
+**For an app with a media service of its own** (Thumper, Spice) use the same screen on its player: `FullscreenPlayer(player, title) { close }`, or `PlayerContent(player, window, onClose, options = PlayerOptions(...))` inside the app's own screen. `PlayerOptions` turns off what the host decides itself (orientation, repeat, picture-in-picture, rotate). Such an app removes Glass's service from its manifest: `<service android:name="com.everettpenne.player.PlayerService" tools:node="remove" />`.
 
 The decisions that need no screen (gesture maths, subtitle matching, track names, resume) are in `PlayerLogic.kt` and unit-tested.
 

@@ -63,10 +63,11 @@ internal fun PanelRow(label: String, selected: Boolean = false, detail: String? 
     Box(Modifier.fillMaxWidth().padding(start = 20.dp).height(1.dp).background(Hairline))
 }
 
-/** A row of small choices (subtitle sizes). */
+/** A row of small choices (subtitle sizes), wrapping onto a second line in a narrow panel. */
 @Composable
 internal fun PanelChips(options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
-    Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+    FlowRow(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEachIndexed { i, text ->
             Box(Modifier.background(if (i == selected) Color.White else Color.White.copy(alpha = .14f), RoundedCornerShape(50)).clickable { onSelect(i) }.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Text(text, style = IosType.subheadline, color = if (i == selected) Color.Black else Color.White)

@@ -107,6 +107,10 @@ data class PlayerOptions(
     /** When not null, a "Keep playing when I leave" row is offered in More, showing this, and [onBackgroundPlay] is told of a change. */
     val backgroundPlay: Boolean? = null,
     val onBackgroundPlay: (Boolean) -> Unit = {},
+    /** Picture-in-picture the host does itself (with its own window shape and actions); null uses Glass's. */
+    val onPictureInPicture: (() -> Unit)? = null,
+    /** A rotate / full-screen action the host owns (it decides the orientation itself); null uses the player's own when [manageOrientation] is on. */
+    val onRotate: (() -> Unit)? = null,
 )
 
 /**
@@ -419,6 +423,8 @@ fun PlayerContent(
     }
 
     val title = title ?: itemTitle
+    // Controls on video are plain dark discs: the page's glass backdrop (when this is drawn inside an app's own screen) would paint pale ones.
+    CompositionLocalProvider(LocalGlassBackdrop provides null) {
     Box(modifier.fillMaxSize().background(Color.Black).playerGestures(handlers, dragsEnabled = !locked)) {
         PlayerSurface(player, fit, subtitleSize, Modifier.fillMaxSize().semantics { contentDescription = "Video" })
         if (!tracks.isTypeSupported(C.TRACK_TYPE_VIDEO) && tracks.groups.isNotEmpty() && error == null) {
@@ -455,7 +461,7 @@ fun PlayerContent(
                     if (player.mediaItemCount > 1) Text("${index + 1} of ${player.mediaItemCount}", style = IosType.caption1, color = Color.White.copy(alpha = .7f))
                 }
                 Ctl({ panel = PanelKind.TRACKS }, "Audio and subtitles", size = 40.dp) { Icon(Icons.Rounded.Subtitles, null, tint = Color.White, modifier = Modifier.size(22.dp)) }
-                if (options.showPictureInPicture) Ctl({ activity?.let { enterVideoPip(it) } }, "Picture in picture", size = 40.dp) { Icon(Icons.Rounded.PictureInPictureAlt, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+                if (options.showPictureInPicture) Ctl({ options.onPictureInPicture?.invoke() ?: activity?.let { enterVideoPip(it) } }, "Picture in picture", size = 40.dp) { Icon(Icons.Rounded.PictureInPictureAlt, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
                 Ctl({ panel = PanelKind.MORE }, "More", size = 40.dp) { Icon(Icons.Rounded.MoreVert, null, tint = Color.White, modifier = Modifier.size(22.dp)) }
             }
             Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -475,7 +481,9 @@ fun PlayerContent(
                         repeat = repeat.next(); player.repeatMode = repeat.toPlayer(); toast = "Repeat: " + when (repeat) { RepeatMode.OFF -> "off"; RepeatMode.ALL -> "all"; RepeatMode.ONE -> "this video" }
                     }
                     Spacer(Modifier.weight(1f))
-                    if (options.manageOrientation) Tool(Icons.Rounded.ScreenRotation, "Rotate", null, orientation != 0) { orientation = if (activity?.resources?.configuration?.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) 2 else 1 }
+                    if (options.manageOrientation || options.onRotate != null) Tool(Icons.Rounded.ScreenRotation, "Rotate", null, orientation != 0) {
+                        options.onRotate?.invoke() ?: run { orientation = if (activity?.resources?.configuration?.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) 2 else 1 }
+                    }
                 }
             }
             // the picture under the finger while scrubbing, above the thumb
@@ -520,6 +528,7 @@ fun PlayerContent(
                 videoInfo(player)?.let { PanelRow("Video", detail = it) }
             }
         }
+    }
     }
 }
 
