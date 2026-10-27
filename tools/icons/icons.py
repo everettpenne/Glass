@@ -120,3 +120,34 @@ body+=P(dune,sgrad=lin(54,74,54,90,[(0,'88FFFFFF'),(1,'00FFFFFF')]),sw=0.9)
 write('seekur','drawable/ic_launcher_background.xml',background('FFB347','E0560C'),OUT+'/seekur')
 write('seekur','drawable/ic_launcher_foreground.xml',vec(G(sh,sc=.98,ty=-2)+G(body,sc=.98,ty=-2)),OUT+'/seekur')
 write('seekur','drawable/ic_launcher_monochrome.xml',open(os.path.expanduser('~/Code/DuneDdit')+'/app/src/main/res/drawable/ic_launcher_monochrome.xml').read(),OUT+'/seekur')
+
+# ---- Holtzman Camera: an aperture inside a field ring
+import math
+def _pt(r, deg):
+    a = math.radians(deg)
+    return (54 + r * math.cos(a), 54 + r * math.sin(a))
+def _poly(points):
+    return 'M' + ' L'.join(f'{x:.2f},{y:.2f}' for x, y in points) + ' Z'
+outer = 'M54,27 A27,27 0 0 1 54,81 A27,27 0 0 1 54,27 Z'
+hexagon = _poly([_pt(11, 60 * i) for i in range(6)])
+blades = ''.join(
+    f'M{_pt(27, 30 + 60 * i)[0]:.2f},{_pt(27, 30 + 60 * i)[1]:.2f} '
+    f'L{_pt(11, 60 * i)[0]:.2f},{_pt(11, 60 * i)[1]:.2f}'
+    for i in range(6)
+)
+field = 'M28,43 A30,30 0 0 1 43,28'
+dot = 'M54,54m-2.6,0a2.6,2.6 0 1 1,5.2 0a2.6,2.6 0 1 1,-5.2 0'
+hol_fills = [(dot, None, False)]
+hol_strokes = [(outer, 3.2, 1.0), (hexagon, 2.2, 1.0)]
+for i in range(6):
+    a = 30 + 60 * i
+    b = 60 * i
+    x1, y1 = _pt(27, a); x2, y2 = _pt(11, b)
+    hol_strokes.append((f'M{x1:.2f},{y1:.2f} L{x2:.2f},{y2:.2f}', 2.0, 1.0))
+hol_strokes.append((field, 1.4, .55))
+write('holtzman','drawable/ic_launcher_background.xml',background('2C4A5A','B87333'),OUT+'/holtzman')
+write('holtzman','drawable/ic_launcher_foreground.xml',vec(G(full(hol_fills,hol_strokes,'3A1600'),sc=.92,ty=-1)),OUT+'/holtzman')
+hol_mono = ''.join(P(d, fill='000000', even=ev) for d, g, ev in hol_fills)
+hol_mono += ''.join(P(d, stroke='000000', sw=w, sa=max(a, .6)) for d, w, a in hol_strokes)
+write('holtzman','drawable/ic_launcher_monochrome.xml',vec(G(hol_mono,sc=.92,ty=-1)),OUT+'/holtzman')
+print('written holtzman')
