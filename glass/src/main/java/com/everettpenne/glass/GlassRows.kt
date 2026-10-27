@@ -1,5 +1,9 @@
 package com.everettpenne.glass
 
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.ui.draw.clip
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -175,5 +179,44 @@ fun GlassEmptyState(
         Text(title, style = IosType.title3.copy(fontWeight = FontWeight.SemiBold), color = ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Text(message, style = IosType.subheadline, color = ink.copy(alpha = .62f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         if (action != null) { Spacer(Modifier.height(4.dp)); action() }
+    }
+}
+
+/**
+ * Rows the shape of the content that is coming, with a light sweeping across them: a loading state that looks like the page it becomes. Still when
+ * the system's animations are off.
+ */
+@Composable
+fun GlassSkeleton(count: Int = 5, modifier: Modifier = Modifier, rowHeight: androidx.compose.ui.unit.Dp = 56.dp) {
+    val animate = androidx.compose.ui.platform.LocalContext.current.let { context ->
+        android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
+    }
+    val sweep = if (animate) androidx.compose.animation.core.rememberInfiniteTransition(label = "skeleton").animateFloat(-1f, 2f,
+        androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(1300, easing = androidx.compose.animation.core.LinearEasing)), label = "sweep").value else .5f
+    val base = glassPalette().ink.copy(alpha = .08f)
+    Column(modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        repeat(count) { index ->
+            Row(Modifier.fillMaxWidth().height(rowHeight).drawWithContent {
+                drawContent()
+                if (animate) drawRect(androidx.compose.ui.graphics.Brush.linearGradient(
+                    listOf(androidx.compose.ui.graphics.Color.Transparent, androidx.compose.ui.graphics.Color.White.copy(alpha = .22f), androidx.compose.ui.graphics.Color.Transparent),
+                    start = androidx.compose.ui.geometry.Offset(size.width * (sweep - .3f), 0f), end = androidx.compose.ui.geometry.Offset(size.width * (sweep + .3f), size.height * .4f)))
+            }, verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(rowHeight * .78f).clip(GlassCorner.iconShape).background(base))
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.fillMaxWidth(if (index % 2 == 0) .55f else .7f).height(12.dp).clip(GlassCorner.smallShape).background(base))
+                    Box(Modifier.fillMaxWidth(if (index % 2 == 0) .35f else .42f).height(10.dp).clip(GlassCorner.smallShape).background(base.copy(alpha = .06f)))
+                }
+            }
+        }
+    }
+}
+
+/** Something failed: the empty state's shape with a symbol, what went wrong, and a Retry button, so an error reads as calmly as an empty list. */
+@Composable
+fun GlassErrorState(title: String, message: String, onRetry: () -> Unit, modifier: Modifier = Modifier, retryLabel: String = "Retry") {
+    GlassEmptyState(androidx.compose.material.icons.Icons.Rounded.CloudOff, title, message, modifier) {
+        GlassButton(retryLabel, onRetry, prominent = true)
     }
 }
