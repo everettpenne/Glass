@@ -36,18 +36,19 @@ fun scrubberFraction(positionMs: Long, durationMs: Long, scrub: Float?): Float =
 
 /**
  * The scrubber: a glass slider with the elapsed time under its left end and the time left under its right. Dragging moves only the thumb and
- * the times (so the picture or sound does not stutter under the finger); the player seeks once, where the finger lets go.
+ * the times (so the picture or sound does not stutter under the finger); the player seeks once, where the finger lets go. [onScrub] reports the
+ * thumb's place (0..1) while it moves, and null when it is let go, for a caller that wants to show a preview of that moment.
  */
 @Composable
 fun PlayerScrubber(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit, modifier: Modifier = Modifier,
-    timeColor: Color = MaterialTheme.colorScheme.onSurfaceVariant, onScrubbing: (Boolean) -> Unit = {}) {
+    timeColor: Color = MaterialTheme.colorScheme.onSurfaceVariant, onScrubbing: (Boolean) -> Unit = {}, onScrub: (Float?) -> Unit = {}) {
     var scrub by remember { mutableStateOf<Float?>(null) }
     val duration = durationMs.coerceAtLeast(0)
     val shown = scrub?.let { (it * duration).toLong() } ?: positionMs
     Column(modifier.fillMaxWidth()) {
         GlassSlider(value = scrubberFraction(positionMs, duration, scrub),
-            onValueChange = { if (scrub == null) onScrubbing(true); scrub = it },
-            onValueChangeFinished = { scrub?.let { onSeek((it * duration).toLong()) }; scrub = null; onScrubbing(false) },
+            onValueChange = { if (scrub == null) onScrubbing(true); scrub = it; onScrub(it) },
+            onValueChangeFinished = { scrub?.let { onSeek((it * duration).toLong()) }; scrub = null; onScrubbing(false); onScrub(null) },
             modifier = Modifier.fillMaxWidth(), description = "Seek")
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
             Text(playerClock(shown), style = IosType.caption1, color = timeColor)

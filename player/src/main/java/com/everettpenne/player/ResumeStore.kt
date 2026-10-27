@@ -18,6 +18,11 @@ class ResumeStore private constructor(context: Context) {
         get() = prefs.getFloat("subtitleSize", 0.0533f)
         set(v) { prefs.edit().putFloat("subtitleSize", v).apply() }
 
+    /** "Keep playing when I leave": whether a video's sound carries on in the background. Off until asked for. */
+    var backgroundPlay: Boolean
+        get() = prefs.getBoolean("backgroundPlay", false)
+        set(v) { prefs.edit().putBoolean("backgroundPlay", v).apply() }
+
     companion object {
         @Volatile private var instance: ResumeStore? = null
         fun of(context: Context): ResumeStore = instance ?: synchronized(this) { instance ?: ResumeStore(context).also { instance = it } }

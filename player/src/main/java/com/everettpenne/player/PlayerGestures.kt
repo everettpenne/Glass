@@ -50,6 +50,8 @@ internal fun Modifier.playerGestures(handlers: GestureHandlers, dragsEnabled: Bo
                     if (c == null) { phase = Phase.CANCEL; break }
                     // a button under the finger consumes its own tap: that is the button's, not a tap on the picture
                     if (c.changedToUpIgnoreConsumed()) { phase = if (c.isConsumed) Phase.CANCEL else Phase.UP; break }
+                    // a control under the finger (the scrubber) that takes the drag keeps it: it is not a swipe on the picture
+                    if (c.isConsumed) { phase = Phase.CANCEL; break }
                     if ((c.position - start).getDistance() > slop) { phase = Phase.DRAG; break }
                 }
                 phase

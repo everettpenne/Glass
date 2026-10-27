@@ -29,6 +29,8 @@ dependencies {
     api("androidx.media3:media3-common:1.7.1")
     implementation("androidx.media3:media3-ui:1.7.1")
     implementation("androidx.media3:media3-exoplayer:1.7.1")
+    // The service that plays in the background, and the controller every screen talks to it with.
+    implementation("androidx.media3:media3-session:1.7.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.1")
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.activity:activity-compose:1.10.1")

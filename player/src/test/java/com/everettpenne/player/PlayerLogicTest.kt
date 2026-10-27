@@ -86,3 +86,22 @@ class PlayerLogicTest {
         assertEquals(0, ResumeBook.decode("garbage\n\n\t\t").size)
     }
 }
+
+class ThumbnailLogicTest {
+    @org.junit.Test fun framesAreTakenPerSecond() {
+        org.junit.Assert.assertEquals(0L, thumbnailBucket(999)); org.junit.Assert.assertEquals(1000L, thumbnailBucket(1000)); org.junit.Assert.assertEquals(83000L, thumbnailBucket(83_999))
+        org.junit.Assert.assertEquals(0L, thumbnailBucket(-5))
+    }
+
+    @org.junit.Test fun theBubbleStaysInsideTheTrack() {
+        org.junit.Assert.assertEquals(0f, bubbleOffset(0f, 1000f, 200f), 0.01f)       // at the start it is pushed right, not off the edge
+        org.junit.Assert.assertEquals(400f, bubbleOffset(0.5f, 1000f, 200f), 0.01f)   // centred under the thumb
+        org.junit.Assert.assertEquals(800f, bubbleOffset(1f, 1000f, 200f), 0.01f)
+        org.junit.Assert.assertEquals(0f, bubbleOffset(0.5f, 100f, 200f), 0.01f)      // a track narrower than the bubble
+    }
+
+    @org.junit.Test fun sizeKeepsTheShape() {
+        org.junit.Assert.assertEquals(320 to 180, thumbnailSize(1920, 1080, 320)); org.junit.Assert.assertEquals(180 to 320, thumbnailSize(1080, 1920, 320))
+        org.junit.Assert.assertEquals(320 to 320, thumbnailSize(500, 500, 320)); org.junit.Assert.assertEquals(320 to 180, thumbnailSize(0, 0, 320))
+    }
+}

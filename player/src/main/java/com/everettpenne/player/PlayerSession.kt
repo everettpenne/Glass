@@ -1,6 +1,5 @@
 package com.everettpenne.player
 
-import android.content.Context
 import android.net.Uri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -9,7 +8,6 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
-import androidx.media3.exoplayer.ExoPlayer
 import java.io.File
 
 /** The file behind a "file:" address, or null for anything else (https, content:). Only files can have subtitle files beside them. */
@@ -30,19 +28,6 @@ internal fun mediaItemOf(source: VideoSource): MediaItem {
     }
     return builder.build()
 }
-
-/**
- * A player for [items], starting at [startIndex] (and at [resumeAtMs] in that one). It takes audio focus, pauses when headphones are pulled out,
- * and starts playing at once. The caller releases it.
- */
-internal fun buildPlayer(context: Context, items: List<VideoSource>, startIndex: Int, resumeAtMs: Long?): ExoPlayer =
-    ExoPlayer.Builder(context)
-        .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), true)
-        .setHandleAudioBecomingNoisy(true)
-        .build().apply {
-            setMediaItems(items.map(::mediaItemOf), startIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0)), resumeAtMs ?: 0L)
-            prepare(); playWhenReady = true
-        }
 
 /** One audio or subtitle track the user can pick. */
 internal data class TrackOption(val group: Tracks.Group, val index: Int, val label: String, val selected: Boolean)
@@ -86,8 +71,8 @@ internal fun Player.addSubtitle(uri: Uri, displayName: String) {
 internal val Player.textDisabled: Boolean get() = trackSelectionParameters.disabledTrackTypes.contains(C.TRACK_TYPE_TEXT)
 
 /** "1280×720 · H.264 · 2.4 Mbps" for the video now playing, as far as the file says. */
-internal fun videoInfo(player: ExoPlayer): String? {
-    val f = player.videoFormat ?: return null
+internal fun videoInfo(player: Player): String? {
+    val f = player.currentTracks.groups.firstOrNull { it.type == C.TRACK_TYPE_VIDEO && it.isSelected }?.let { g -> (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let { g.getTrackFormat(it) } } ?: return null
     val codec = when {
         f.sampleMimeType == null -> null
         f.sampleMimeType!!.contains("avc") -> "H.264"
