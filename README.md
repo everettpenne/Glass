@@ -58,6 +58,26 @@ VideoSurface(player, enabled = !fullscreen)             // the picture, for the 
 
 `ImageViewer`: pinch to zoom up to 6x, pan, double-tap to zoom, swipe between images, swipe down to dismiss, tap to hide the controls. `FullscreenVideo`: black, system bars hidden, turns the phone to landscape for wide video and back afterwards, glass controls (play/pause, seek slider, remaining time, mute) that hide while playing, tap to show or hide, double-tap either half to skip 10 s, Back to leave. The player is the caller's, so playback carries on across the switch with no re-buffering.
 
+## Player
+
+`:player` (`implementation("com.everettpenne:player")`, package `com.everettpenne.player`) is the full-screen video and sound player, built the way a phone's own player behaves. It sits on `:media` (picture-in-picture, the scrubber) and replaces its simple `VideoViewerHost`:
+
+```kotlin
+PlayerHost {                       // once, at the root; provides LocalVideoViewer (one file) and LocalVideoPlaylist (a folder)
+    val playlist = LocalVideoPlaylist.current
+    playlist(listOf(VideoSource("file:///sdcard/Movies/a.mp4", "a.mp4"), ...), startIndex)
+}
+// or directly: VideoPlayer(items, startIndex) { onClose() }
+```
+
+- **Gestures:** swipe across to seek (with a preview of where it lands), up and down on the left for brightness and on the right for volume, hold for 2× while pressed, double-tap a side to skip 10 s, double-tap the middle to play or pause, tap to show or hide the controls.
+- **Controls:** previous / next through the list, ±10 s, speed (0.25× to 4×), fit / fill / stretch, repeat (off, all, one), lock, rotate, picture-in-picture.
+- **Tracks:** audio and subtitle tracks by name and language, subtitle files found beside the video (`name.srt`, `name.en.vtt`, `.ass`) and any file you pick, and a subtitle size.
+- **Remembers:** where each video was left (not for under 30 s, the first 5 s or the last 10 s), asked once with a "Start over" button; the subtitle size.
+- **Behaves:** follows a wide video to landscape, keeps the screen on while playing, takes audio focus, pauses when headphones come out or the app is left (not in picture-in-picture), and plays sound files with the same controls.
+
+The decisions that need no screen (gesture maths, subtitle matching, track names, resume) are in `PlayerLogic.kt` and unit-tested.
+
 ## Rows and lists
 
 `glass/GlassRows.kt` has the list pieces every app was copying: `GlassSectionHeader` (a heading with optional trailing content), `GlassGroup` (an inset-grouped card for rows), `GlassListRow` (leading content, title, subtitle, trailing content, whole row tappable), `GlassRowDivider`, `GlassSearchField` (the clear-glass search capsule, with optional auto-focus) and `GlassEmptyState` (the glass disc, title, message and one optional action used for "nothing here yet"). They are deliberately flat rather than glass-on-glass so a long page stays smooth under the refracting bars.

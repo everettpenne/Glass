@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "Glass"
-include(":glass", ":updater", ":media", ":gallery", ":browser")
+include(":glass", ":updater", ":media", ":gallery", ":browser", ":player")

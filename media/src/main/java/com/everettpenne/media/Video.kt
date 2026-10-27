@@ -58,7 +58,7 @@ object VideoPip {
     var player: Player? by mutableStateOf(null)
     var active: Boolean by mutableStateOf(false)
     /** Whether a [FullscreenVideo] is up. It leaves when the small window opens (the shell takes over the picture), and must not let go of the player then. */
-    internal var fullscreenUp: Boolean = false
+    var fullscreenUp: Boolean = false
 
     /**
      * Called by the host activity from `onPictureInPictureModeChanged`. When the small window closes and no full-screen player is showing,
